@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>School Management System | Usama Hassan Portfolio</title>
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: #1e293b;
+            --accent-glow: #38bdf8;
+            --text-color: #f8fafc;
+            --text-muted: #94a3b8;
+            --border-color: #334155;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        header h1 {
+            color: var(--accent-glow);
+            text-shadow: 0 0 15px rgba(56, 189, 248, 0.4);
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .card h2 {
+            margin-top: 0;
+            color: var(--accent-glow);
+            font-size: 1.25rem;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 10px;
+        }
+
+        ul {
+            list-style: none;
+            padding: 0;
+            max-height: 250px;
+            overflow-y: auto;
+        }
+
+        li {
+            background: rgba(15, 23, 42, 0.6);
+            padding: 10px 14px;
+            margin-bottom: 8px;
+            border-radius: 6px;
+            border-left: 3px solid var(--accent-glow);
+            font-size: 0.9rem;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-bottom: 5px;
+        }
+
+        input {
+            width: 100%;
+            padding: 10px;
+            background: #0f172a;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            color: var(--text-color);
+            box-sizing: border-box;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: var(--accent-glow);
+            box-shadow: 0 0 8px rgba(56, 189, 248, 0.3);
+        }
+
+        button {
+            background-color: var(--accent-glow);
+            color: #0f172a;
+            border: none;
+            padding: 10px 16px;
+            font-weight: bold;
+            border-radius: 6px;
+            cursor: pointer;
+            width: 100%;
+            transition: opacity 0.2s;
+        }
+
+        button:hover {
+            opacity: 0.9;
+        }
+
+        .full-width {
+            grid-column: span 2;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>School Management System</h1>
+        <p style="color: var(--text-muted);">Full-Stack Dashboard Connected to MySQL & Flask API</p>
+    </header>
+
+    <div class="container">
+        <!-- Students List Card -->
+        <div class="card">
+            <h2>Registered Students</h2>
+            <ul id="student-list">
+                <li style="color: var(--text-muted);">Loading students...</li>
+            </ul>
+        </div>
+
+        <!-- Add Student Form Card -->
+        <div class="card">
+            <h2>Add New Student</h2>
+            <form id="student-form">
+                <div class="form-group">
+                    <label>Roll Number</label>
+                    <input type="text" id="roll_number" placeholder="CS/2026/002" required>
+                </div>
+                <div class="form-group">
+                    <label>Full Name</label>
+                    <input type="text" id="full_name" placeholder="John Doe" required>
+                </div>
+                <div class="form-group">
+                    <label>Email Address</label>
+                    <input type="email" id="email" placeholder="john@example.com" required>
+                </div>
+                <div class="form-group">
+                    <label>Current GPA</label>
+                    <input type="number" step="0.01" id="current_gpa" placeholder="4.50" required>
+                </div>
+                <button type="submit">Save Student</button>
+            </form>
+        </div>
+
+        <!-- Courses Section -->
+        <div class="card full-width">
+            <h2>Available Courses</h2>
+            <ul id="course-list">
+                <li style="color: var(--text-muted);">Loading courses...</li>
+            </ul>
+        </div>
+
+        <!-- Enrollments Section -->
+        <div class="card full-width">
+            <h2>Active Student Enrollments (Relational View)</h2>
+            <ul id="enrollment-list">
+                <li style="color: var(--text-muted);">Loading enrollments...</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = "http://127.0.0.1:5000/api";
+
+        // Fetch and display students
+        async function fetchStudents() {
+            try {
+                const response = await fetch(`${API_URL}/students`);
+                const students = await response.json();
+                const list = document.getElementById('student-list');
+                list.innerHTML = '';
+                
+                if (students.length === 0) {
+                    list.innerHTML = '<li>No students found.</li>';
+                    return;
+                }
+
+                students.forEach(s => {
+                    const li = document.createElement('li');
+                    li.innerHTML = `<strong>${s.full_name}</strong> (${s.roll_number}) — GPA: ${s.current_gpa}`;
+                    list.appendChild(li);
+                });
+            } catch (error) {
+                console.error('Error fetching students:', error);
+            }
+        }
+
+        // Fetch and display courses
+        async function fetchCourses() {
+            try {
+                const response = await fetch(`${API_URL}/courses`);
+                const courses = await response.json();
+                const list = document.getElementById('course-list');
+                list.innerHTML = '';
+
+                if (courses.length === 0) {
+                    list.innerHTML = '<li>No courses found.</li>';
+                    return;
+                }
+
+                courses.forEach(c => {
+                    const li = document.createElement('li');
+                    li.innerHTML = `<strong>${c.course_code}:</strong> ${c.course_name} (${c.credits} Credits)`;
+                    list.appendChild(li);
+                });
+            } catch (error) {
+                console.error('Error fetching courses:', error);
+            }
+        }
+
+        // Fetch and display student enrollments
+        async function fetchEnrollments() {
+            try {
+                const response = await fetch(`${API_URL}/enrollments`);
+                const enrollments = await response.json();
+                const list = document.getElementById('enrollment-list');
+                list.innerHTML = '';
+
+                if (enrollments.length === 0) {
+                    list.innerHTML = '<li>No enrollments found.</li>';
+                    return;
+                }
+
+                enrollments.forEach(e => {
+                    const li = document.createElement('li');
+                    li.innerHTML = `<strong>${e.full_name}</strong> (${e.roll_number}) is enrolled in <strong>${e.course_code}: ${e.course_name}</strong>`;
+                    list.appendChild(li);
+                });
+            } catch (error) {
+                console.error('Error fetching enrollments:', error);
+            }
+        }
+
+        // Handle Add Student form submission
+        document.getElementById('student-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const payload = {
+                roll_number: document.getElementById('roll_number').value,
+                full_name: document.getElementById('full_name').value,
+                email: document.getElementById('email').value,
+                current_gpa: parseFloat(document.getElementById('current_gpa').value)
+            };
+
+            try {
+                const response = await fetch(`${API_URL}/students`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (response.ok) {
+                    document.getElementById('student-form').reset();
+                    fetchStudents(); // Refresh list
+                } else {
+                    alert('Error adding student.');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        });
+
+        // Initial data load on page open
+        fetchStudents();
+        fetchCourses();
+        fetchEnrollments();
+    </script>
+</body>
+</html>
